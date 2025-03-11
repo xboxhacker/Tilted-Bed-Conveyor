@@ -27,6 +27,9 @@ G92 E0 Z0
 
 ---
 Download the `orca_to_belt.exe` file to your computer.
+
+https://github.com/xboxhacker/Tilted-Bed-Conveyor/releases/
+
 This program is not Mac or Linux compatible. Sorry.
 
 
