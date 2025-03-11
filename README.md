@@ -46,5 +46,11 @@ Change your path to the file. Offsets are optional
  Drag the saved GCODE back to Orca to see the preview. It should look like this.
  
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/preview.png)
+
+ ---
+
+ 
+# Cube printed on IR3V2, sliced with Orca!
+ ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/20250311_121605.jpg)
  
 
