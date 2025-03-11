@@ -1,5 +1,5 @@
 # Orca_to_Belt
-Tilted bed conveyor belt for 3D printer sliced from OrcaSlicer.
+OrcaSlicer post script to convert to belt printing.
 Based on the work of zechyc.
 
 **THIS IS A WORK IN PROGRESS; IT HAS SOME BUGS**
