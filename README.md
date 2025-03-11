@@ -6,7 +6,9 @@ Tilted bed conveyor belt for 3D printer sliced from OrcaSlicer
 Add a generic printer to Orca to start a profile for your belt printer. Adjust the build plate Y and Z to about 600-1000. **DO NOT make it 99999**. You will have issues zooming in and panning around. You want to make it the size of your object.
 
 Still working on a purge line, so for now, remove it from the start GCODE section in Orca. This is mine:
-`M190 S[bed_temperature_initial_layer_single]
+```
+{
+M190 S[bed_temperature_initial_layer_single]
 M109 S[nozzle_temperature_initial_layer]
 PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_initial_layer_single]
 G92 E0        ; Set axis to 0
@@ -22,7 +24,9 @@ G92 Z0
 G1 Z.4
 G1 X0 E75 
 G1 F1000
-G92 E0 Z0`
+G92 E0 Z0
+}
+```
 
 ---
 
