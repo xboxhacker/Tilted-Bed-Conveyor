@@ -1,5 +1,7 @@
-# Tilted-Bed-Conveyor
-Tilted bed conveyor belt for 3D printer
+# Orca_to_Belt
+Tilted bed conveyor belt for 3D printer sliced from OrcaSlicer
 
-Slic3r command in Post Processing scripts box: C:\Tilted Bed Processor\Slic3rPostProcessor.bat
-Bat file content: "C:\tilted bed Processor\Tilted bed - BlackBelt Orientation.exe" "%~1" "%~1" 0 0 35
+In OrcaSLicer>Others add this to the postprocessing script:
+"full\path\to\orca_to_belt.exe" [x_offset] [y_offset] 
+
+Change your path to the file. Offsets are optional
