@@ -13,8 +13,7 @@ Change your path to the file. Offsets are optional
 
  Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED).
  
- ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/rotate45d
-.png)
+ ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/rotate45d.png)
 
 ---
 
