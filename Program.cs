@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +21,7 @@ namespace GCodeShifter
     class Program
     {
 
-        static double Angle = 35.0;
+        static double Angle = 45.0;
         static double Hyp = 0.0;
         static double Adj = 0.0;
 
@@ -35,7 +35,7 @@ namespace GCodeShifter
         {
 
             string inputFile = args[0];
-            string tempFile =  inputFile.Substring(0, inputFile.LastIndexOf("\\")) + "\\"+ "_temp.gcode";
+            string tempFile =  inputFile + "_temp.gcode";
             string outputFile = args[1];
             string xoffsetLength = "";
             string yoffsetLength = "";
@@ -95,9 +95,9 @@ namespace GCodeShifter
                             {
                                 Slicer = "S3D";
                             }
-                            if (s.IndexOf("Slic3r") > 0) //Cura
+                            if (s.IndexOf("OrcaSlicer") > 0) //Cura
                             {
-                                Slicer = "Slic3r";
+                                Slicer = "OrcaSlicer";
                             }
                         }
                     }
@@ -148,7 +148,7 @@ namespace GCodeShifter
             // and record the layer height, as it will be the offset going forward
             if (temp[0] == "G0" && (lineData.IndexOf("Z") > 0) && (slicer=="Cura")) //Cura
             {
-
+				Console.WriteLine("Cura");
                 double currentZ = double.Parse(lineData.Substring(lineData.IndexOf("Z") + 1, (lineData.Length - lineData.IndexOf("Z") - 1)));
 
                  if (currentOffset == 0.0)
@@ -164,26 +164,31 @@ namespace GCodeShifter
                 y_offset = currentZ *Adj - currentOffset; //y_offset + currentOffset; 
                                 
             }
-            //Slic3r
-            if (temp[0] == "G1" && (lineData.IndexOf("Z") > 0) && (slicer == "Slic3r")) //S3D
+            //OrcaSlicer
+            if (temp[0] == "G1" && (lineData.IndexOf("Z") > 0) && (slicer == "OrcaSlicer")) //OrcaSlicer
             {
+				
 
+				
+				Console.WriteLine("OrcaSlicer");
                 double currentZ = double.Parse(lineData.Substring(lineData.IndexOf("Z") + 1, (lineData.Length - lineData.IndexOf("F") - lineData.IndexOf("Z")-2)));
+				Console.WriteLine("#error part");
 
                 if (currentOffset == 0.0)
                 {
+					Console.WriteLine("#1");
                     // capture the very first layer height (as this is the Y offset going forward.)
                     currentOffset = currentZ * Adj;  // .7 is the adjacent side length of a 35 degree angle
                 }
-
+Console.WriteLine("#2");
                 lineData = lineData.Substring(0, lineData.IndexOf("Z") + 1) + (currentZ * Hyp).ToString();
                 temp = lineData.Split(Char.Parse(" "));
-
+Console.WriteLine("#3");
                 // and remember to add the new Y offset
                 y_offset = currentZ * Adj - currentOffset; //y_offset + currentOffset; 
 
             }
-            //S3D
+/*             //S3D
             if (temp[0] == "G1" && (lineData.IndexOf("Z") > 0) && (slicer == "S3D")) //S3D
             {
 
@@ -201,7 +206,7 @@ namespace GCodeShifter
                 // and remember to add the new Y offset
                 y_offset = currentZ * Adj - currentOffset; //y_offset + currentOffset; 
 
-            }
+            } */
 
 
             if (currentOffset != 0.0)
