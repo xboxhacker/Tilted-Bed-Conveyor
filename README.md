@@ -32,9 +32,9 @@ Download the `orca_to_belt.exe` file to your computer.
 This program is not Mac or Linux compatible. Sorry.
 
 
-In OrcaSLicer>Others, add this to the postprocessing script section:
+In OrcaSlicer>Others, add this to the postprocessing script section:
 `"full\path\to\orca_to_belt.exe" [x_offset] [y_offset] [angle]`
-Change your path to the file. Offsets are optional
+Change your path to the file. Offsets are optional and not needed.
 
 ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/postporcessing.png)
 
