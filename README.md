@@ -28,6 +28,9 @@ G92 E0 Z0
 ```
 
 ---
+Download the `orca_to_belt.exe` file to your computer.
+This program is not Mac or Linux compatible. Sorry.
+
 
 In OrcaSLicer>Others, add this to the postprocessing script section:
 `"full\path\to\orca_to_belt.exe" [x_offset] [y_offset] [angle]`
