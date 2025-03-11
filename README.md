@@ -1,5 +1,6 @@
 # Orca_to_Belt
-Tilted bed conveyor belt for 3D printer sliced from OrcaSlicer
+Tilted bed conveyor belt for 3D printer sliced from OrcaSlicer.
+Based on the work of zechyc.
 
 # Usage
 
