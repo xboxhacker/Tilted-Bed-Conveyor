@@ -14,12 +14,12 @@ PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_ini
 G92 E0        ; Set axis to 0
 G1 Y.1
 G1 E15 F1000
-G1 Z20 E25 F800
+;G1 Z20 E25 F800
 G1 E23
 G28 Y
 G1 E25
 FMS_on
-G1 X250 E50 F2000
+;G1 X250 E50 F2000
 G92 Z0
 G1 Z.4
 G1 X0 E75 
