@@ -27,6 +27,8 @@ G1 F1000
 G92 E0 Z0
 ```
 
+### NOTE: Supports are not going to work with this script unless you build them into your file.
+
 ---
 Download the `orca_to_belt.exe` file to your computer.
 This program is not Mac or Linux compatible. Sorry.
