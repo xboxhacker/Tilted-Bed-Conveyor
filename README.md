@@ -38,7 +38,7 @@ Change your path to the file. Offsets are optional and not needed.
 
 ---
 
- Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED).
+ Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED). Make sure your `First Layer Height` and `Layer Height` are the same, or Orca will throw an error.
  
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/rotate45d.png)
 
