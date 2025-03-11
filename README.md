@@ -46,6 +46,8 @@ Change your path to the file. Offsets are optional and not needed.
 
  Slice your file and save your GCODE to the hard drive.
  Drag the saved GCODE back to Orca to see the preview. It should look like this.
+
+### NOTE: The preview will be mirrored!!
  
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/preview.png)
 
