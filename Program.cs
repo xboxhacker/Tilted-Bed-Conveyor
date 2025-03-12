@@ -19,7 +19,6 @@ namespace GCodeShifter
         static double y_offset;
         static double currentOffset = 0.0;
         static double moveforward = 0;
-        static double xCenter = 0.0; // To store the bounding box center
 
         static void Main(string[] args)
         {
@@ -43,48 +42,33 @@ namespace GCodeShifter
             Hyp = 1 / Math.Cos((90 - Angle) / 180 * Math.PI);
             Adj = Math.Tan((90 - Angle) / 180 * Math.PI);
 
-            // First pass: Detect slicer and find X bounding box
-            double minX = double.MaxValue;
-            double maxX = double.MinValue;
+            // Detect slicer
             using (StreamReader sr = File.OpenText(tempFile))
             {
                 string s;
-                while ((s = sr.ReadLine()) != null)
+                while ((s = sr.ReadLine()) != null && Slicer == "")
                 {
-                    if (Slicer == "")
-                    {
-                        if (s.Contains("Cura_SteamEngine")) Slicer = "Cura";
-                        else if (s.Contains("Simplify3D(R)")) Slicer = "S3D";
-                        else if (s.Contains("OrcaSlicer")) Slicer = "OrcaSlicer";
-                    }
-
-                    string[] temp = s.TrimStart().Split(' ');
-                    if ((temp[0] == "G0" || temp[0] == "G1") && s.IndexOf("X") > 0)
-                    {
-                        for (int segment = 0; segment < temp.Length; segment++)
-                        {
-                            if (temp[segment].StartsWith("X"))
-                            {
-                                double xValue = double.Parse(temp[segment].Substring(1));
-                                minX = Math.Min(minX, xValue);
-                                maxX = Math.Max(maxX, xValue);
-                            }
-                        }
-                    }
+                    if (s.Contains("Cura_SteamEngine")) Slicer = "Cura";
+                    if (s.Contains("Simplify3D(R)")) Slicer = "S3D";
+                    if (s.Contains("OrcaSlicer")) Slicer = "OrcaSlicer";
                 }
             }
 
-            // Calculate the original X center
-            xCenter = (minX + maxX) / 2;
-            Console.WriteLine("Bounding box: minX={minX}, maxX={maxX}, xCenter={xCenter}");
-
-            // Second pass: Process file and overwrite input
+            // Process file and overwrite input with header injection
             try
             {
                 using (StreamReader sr = File.OpenText(tempFile))
                 {
                     using (StreamWriter sw = new StreamWriter(inputFile))
                     {
+                        // Inject custom header lines at the start
+                        sw.WriteLine("; HEADER_BLOCK_START");
+                        sw.WriteLine("; Dimension: 250.000 9999.000 250.000 0.800");
+                        sw.WriteLine("; Belt Printer: 1");
+                        sw.WriteLine("; Belt Offset Y: 0.000");
+                        sw.WriteLine("; Belt Offset Z: 3570.535");
+                        sw.WriteLine("; Belt Gantry Angle: 45");
+
                         string s;
                         while ((s = sr.ReadLine()) != null)
                         {
@@ -157,8 +141,7 @@ namespace GCodeShifter
                             if (temp[segment].StartsWith("X") && !xFixed)
                             {
                                 double xValue = double.Parse(temp[segment].Substring(1));
-                                double mirroredX = 2 * xCenter - xValue; // Mirror around xCenter
-                                temp[segment] = "X" + (mirroredX + x_original).ToString(); // Apply offset
+                                temp[segment] = "X" + (xValue + x_original).ToString();
                                 xFixed = true;
                             }
 
