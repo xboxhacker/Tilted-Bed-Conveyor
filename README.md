@@ -16,7 +16,6 @@ PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_ini
 G28           ;Home
 G92 E0        ; Set axis to 0
 G1 E25        ;Blob Purge
-;G1 Z0.4      ;USE THIS FOR A BELT OFFSET!! The higher the number, the more space between the nozzle and belt.
 FMS_on
 G92 E0 Z0
 
