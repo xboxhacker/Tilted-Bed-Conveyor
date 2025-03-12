@@ -14,10 +14,9 @@ M190 S[bed_temperature_initial_layer_single]
 M109 S[nozzle_temperature_initial_layer]
 PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_initial_layer_single]
 G92 E0        ; Set axis to 0
-;G1 Z20 E25 F800
-G1 E25
+G1 E25        ;Blob Purge
+;G1 Z0.4      ;USE THIS FOR A BELT OFFSET!! The higher the number, the more space between the nozzle and belt.
 FMS_on
-;G1 X250 E50 F2000
 G92 Z0
 G92 E0 Z0
 
@@ -41,23 +40,32 @@ Change your path to the file. Offsets are optional and not needed.
 
 ---
 
- Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED). Make sure your `First Layer Height` and `Layer Height` are the same, or Orca will throw an error.
+ Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED). Make sure your `First Layer Height` and `Layer Height` are the same (or very close), or Orca will throw an error.
+
+### NOTE: The face noted in the image will be printed flat on the belt.
  
- ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/rotate45d.png)
+ ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/face.png)
 
 ---
 
  Slice your file and save your GCODE to the hard drive.
  Drag the saved GCODE back to Orca to see the preview. It should look like this.
 
-### NOTE: The preview will be mirrored!!
  
- ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/preview.png)
+ ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/xyz1.jpg)
+ 
+
+ You can drop it into Ideamaker and get a "normal" preview.
+ 
+![alt_text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/xyz2.jpg)
+
+
 
  ---
 
  
 # Cube printed on IR3V2, sliced with Orca!
+
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/20250311_121605.jpg)
  
 
