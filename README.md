@@ -13,11 +13,11 @@ Still working on a purge line, so for now, remove it from the start GCODE sectio
 M190 S[bed_temperature_initial_layer_single]
 M109 S[nozzle_temperature_initial_layer]
 PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_initial_layer_single]
+G28           ;Home
 G92 E0        ; Set axis to 0
 G1 E25        ;Blob Purge
 ;G1 Z0.4      ;USE THIS FOR A BELT OFFSET!! The higher the number, the more space between the nozzle and belt.
 FMS_on
-G92 Z0
 G92 E0 Z0
 
 ```
