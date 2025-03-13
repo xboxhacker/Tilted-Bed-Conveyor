@@ -2,7 +2,7 @@
 OrcaSlicer post script to convert to belt printing.
 Based on the work of zechyc.
 
-**THIS IS A WORK IN PROGRESS; IT HAS ~~SOME~~ LESS BUGS**
+**THIS IS A WORK IN PROGRESS**
 
 # Usage
 
