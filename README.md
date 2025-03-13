@@ -2,7 +2,7 @@
 OrcaSlicer post script to convert to belt printing.
 Based on the work of zechyc.
 
-**THIS IS A WORK IN PROGRESS; IT HAS SOME BUGS**
+**THIS IS A WORK IN PROGRESS; IT HAS ~~SOME~~ LESS BUGS**
 
 # Usage
 
@@ -67,5 +67,19 @@ Change your path to the file. Offsets are optional and not needed.
 # Cube printed on IR3V2, sliced with Orca!
 
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/20250311_121605.jpg)
+
+
+ ---
+
+ # Tesing Volumetric Flow in Orca
+I have created a STEP file for testing flow. It can be found here: https://www.printables.com/model/1228148
+You need to replace the `SpeedTestStructure.step` in the orca folder. Make sure to make a backup!
+
+The model has 5mm graduated marks to help find your max flow.
+
+ ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/volumetric1.png)
+
+![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/volumetric2.png)
+
  
 
