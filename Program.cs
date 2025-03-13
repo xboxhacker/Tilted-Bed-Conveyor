@@ -91,73 +91,56 @@ namespace GCodeShifter
             string[] temp = lineData.Split(' ');
             StringBuilder tempData = new StringBuilder(temp.Length);
 
-            if (temp[0] == "G0" && lineData.IndexOf("Z") > 0 && slicer == "Cura")
+            // Handle G0/G1 lines
+            if (temp[0] == "G0" || temp[0] == "G1")
             {
-                double currentZ = double.Parse(lineData.Substring(lineData.IndexOf("Z") + 1, (lineData.Length - lineData.IndexOf("Z") - 1)));
-                if (currentOffset == 0.0)
-                {
-                    currentOffset = currentZ * Adj;
-                }
-                lineData = lineData.Substring(0, lineData.IndexOf("Z") + 1) + (currentZ * Hyp).ToString();
-                temp = lineData.Split(' ');
-                y_offset = currentZ * Adj - currentOffset;
-            }
+                bool xProcessed = false;
+                bool yProcessed = false;
+                bool zProcessed = false;
+                bool eProcessed = false;
+                bool fProcessed = false;
 
-            if (temp[0] == "G1" && lineData.IndexOf("Z") > 0 && slicer == "OrcaSlicer")
-            {
-                int zIndex = lineData.IndexOf("Z") + 1;
-                string zPart = lineData.Substring(zIndex).Trim();
-                string[] parts = zPart.Split(' ');
-                string zValueStr = parts[0];
-
-                double currentZ;
-                if (double.TryParse(zValueStr, out currentZ))
+                for (int segment = 0; segment < temp.Length; segment++)
                 {
-                    if (currentOffset == 0.0)
+                    if (temp[segment].StartsWith("X") && !xProcessed)
                     {
-                        currentOffset = currentZ * Adj;
+                        double xValue = double.Parse(temp[segment].Substring(1));
+                        temp[segment] = "X" + (xValue + x_original).ToString();
+                        xProcessed = true;
                     }
-                    lineData = lineData.Substring(0, lineData.IndexOf("Z") + 1) + (currentZ * Hyp).ToString();
-                    temp = lineData.Split(' ');
-                    y_offset = currentZ * Adj - currentOffset;
-                }
-                else
-                {
-                    Console.WriteLine("Failed to parse Z value: " + zValueStr);
-                }
-            }
-
-            if (currentOffset != 0.0)
-            {
-                if (temp[0] == "G0" || temp[0] == "G1")
-                {
-                    if (lineData.IndexOf("X") > 0 && lineData.IndexOf("Y") > 0)
+                    else if (temp[segment].StartsWith("Y") && !yProcessed)
                     {
-                        bool xFixed = false;
-                        bool yFixed = false;
-
-                        for (int segment = 0; segment < temp.Length; segment++)
+                        double yValue = double.Parse(temp[segment].Substring(1));
+                        if (moveforward == 0) { moveforward = yValue; }
+                        temp[segment] = "Y" + (yValue + y_offset + y_original - moveforward).ToString();
+                        yProcessed = true;
+                    }
+                    else if (temp[segment].StartsWith("Z") && !zProcessed)
+                    {
+                        double currentZ = double.Parse(temp[segment].Substring(1));
+                        if (currentOffset == 0.0)
                         {
-                            if (temp[segment].StartsWith("X") && !xFixed)
-                            {
-                                double xValue = double.Parse(temp[segment].Substring(1));
-                                temp[segment] = "X" + (xValue + x_original).ToString();
-                                xFixed = true;
-                            }
-
-                            if (temp[segment].StartsWith("Y") && !yFixed)
-                            {
-                                if (moveforward == 0) { moveforward = double.Parse(temp[segment].Substring(1)); }
-                                double yValue = double.Parse(temp[segment].Substring(1));
-                                temp[segment] = "Y" + (yValue + y_offset + y_original - moveforward).ToString();
-                                yFixed = true;
-                            }
+                            currentOffset = currentZ * Adj;
                         }
-
-                        lineData = string.Join(" ", temp);
+                        temp[segment] = "Z" + (currentZ * Hyp).ToString("F4"); // Limit Z to 4 decimal places
+                        y_offset = currentZ * Adj - currentOffset;
+                        zProcessed = true;
+                    }
+                    else if (temp[segment].StartsWith("E") && !eProcessed)
+                    {
+                        // Preserve E value as is
+                        eProcessed = true;
+                    }
+                    else if (temp[segment].StartsWith("F") && !fProcessed)
+                    {
+                        // Preserve F value as is
+                        fProcessed = true;
                     }
                 }
+
+                lineData = string.Join(" ", temp);
             }
+
             return lineData;
         }
     }
