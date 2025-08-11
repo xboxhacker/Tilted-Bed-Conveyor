@@ -25,6 +25,16 @@ G92 E0 Z0
 
 ### NOTE: Supports are not going to work with this script unless you build them into your file.
 
+
+# If you are getting a `Move out of range:` error:
+
+Change this in your `printer.cfg`
+```
+[stepper_y]
+position_min: -6.0
+```
+This will allow for a lower Y movement on the belt. Make sure you do not crash the nozzle! Keep an eye on it.
+
 ---
 Download the `orca_to_belt.exe` file to your computer.
 
