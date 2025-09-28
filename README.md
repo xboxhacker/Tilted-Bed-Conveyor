@@ -26,7 +26,7 @@ G92 E0 Z0
 ### NOTE: Supports are not going to work with this script unless you build them into your STL file.
 
 
-### If you are getting a `Move out of range:` error:
+### If you are getting a `Move out of range:` error -
 
 Change this in your `printer.cfg`
 ```
