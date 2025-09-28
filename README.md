@@ -1,6 +1,6 @@
 # Orca_to_Belt
 OrcaSlicer post script to convert to belt printing.
-Based on the work of zechyc.
+Based on the work of [zechyc](https://github.com/zechyc/Tilted-Bed-Conveyor)
 
 **THIS IS A WORK IN PROGRESS**
 This script only works with Orca Slicer and Windows.
