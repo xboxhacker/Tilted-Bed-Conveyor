@@ -2,6 +2,7 @@
 """
 orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
 Converts standard GCode to belt printer format with coordinate transformations
+v9
 """
 
 import sys
@@ -45,6 +46,27 @@ class OrcaToBelt:
         except Exception as e:
             print(f"Error detecting slicer: {e}")
         return slicer
+
+    def is_blank_g1(self, line):
+        """Check if a G1 command has no X, Y, Z, or E parameters"""
+        line = line.strip()
+        if not (line.startswith("G1") or line.startswith("G0")):
+            return False
+        
+        # Remove the G1/G0 command and any comments
+        parts = line.split(';')[0].strip().split()
+        if len(parts) <= 1:
+            # Only "G1" or "G0" with nothing else
+            return True
+        
+        # Check if any of the parts are X, Y, Z, or E movements
+        has_movement = False
+        for part in parts[1:]:  # Skip the G1/G0 itself
+            if part.startswith(('X', 'Y', 'Z', 'E')):
+                has_movement = True
+                break
+        
+        return not has_movement
 
     def process_line(self, line_data):
         """Process a single line of GCode"""
@@ -138,6 +160,7 @@ class OrcaToBelt:
             return False
 
         # Process and write back to the same file
+        blank_lines_removed = 0
         try:
             with open(input_file, 'w', encoding='utf-8') as sw:
                 # Inject custom header lines at the start
@@ -154,6 +177,12 @@ class OrcaToBelt:
                 # Process each line
                 for line in input_lines:
                     processed_line = self.process_line(line.rstrip('\n\r'))
+                    
+                    # Check for blank G1/G0 commands and skip them
+                    if self.is_blank_g1(processed_line):
+                        blank_lines_removed += 1
+                        continue
+                    
                     sw.write(processed_line + '\n')
 
         except Exception as ex:
@@ -163,6 +192,8 @@ class OrcaToBelt:
         print("orca_to_belt Complete")
         if self.z_speed > 0:
             print(f"Z movements limited to F{self.z_speed:.0f} (executed before XY)")
+        if blank_lines_removed > 0:
+            print(f"Removed {blank_lines_removed} blank G1/G0 command(s)")
         return True
 
 
