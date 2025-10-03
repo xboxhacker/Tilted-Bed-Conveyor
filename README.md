@@ -9,6 +9,7 @@ Based on the work of [zechyc](https://github.com/zechyc/Tilted-Bed-Conveyor)
 ✅ **Coordinate transformation** for tilted bed geometry  
 ✅ **Named parameters** for easy configuration  
 ✅ **Z-speed control** - Independent feedrate for Z movements (executed before XY for safety)  
+✅ **Layer compensation** - Fine-tune layer height with percentage adjustment  
 ✅ **Automatic header injection** for belt printer compatibility  
 ✅ **Cross-platform** - Python 3.6+ required  
 
@@ -69,16 +70,12 @@ In **OrcaSlicer → Printer Settings → Post-processing scripts**, add:
 
 ### Windows:
 ```batch
-"C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe" "C:\Path\To\orca_to_belt.py";
-```
-*or*
-```batch
-"C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe" "C:\Path\To\orca_to_belt.py" "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45 -z_speed 300;
+"C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe" "C:\Path\To\orca_to_belt.py" "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300 -layer_comp 0.663
 ```
 
 ### macOS/Linux:
 ```bash
-python3 /path/to/orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300;
+python3 /path/to/orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300 -layer_comp 0.663
 ```
 
 ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/postporcessing.png)
@@ -92,6 +89,7 @@ python3 /path/to/orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -an
 | `-y_offset` | Y axis offset in mm | 0.0 |
 | `-angle` | Belt gantry angle in degrees | 45.0 |
 | `-z_speed` | Z axis feedrate in mm/min (0 = no change) | 0.0 |
+| `-layer_comp` | Layer height compensation as percentage | 0.0 |
 
 ### Examples:
 
@@ -110,9 +108,14 @@ python3 orca_to_belt.py input.gcode -angle 45.28
 python3 orca_to_belt.py input.gcode -angle 45.28 -z_speed 300
 ```
 
+**With layer compensation:**
+```bash
+python3 orca_to_belt.py input.gcode -angle 45.28 -z_speed 300 -layer_comp 0.663
+```
+
 **All parameters:**
 ```bash
-python3 orca_to_belt.py input.gcode -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300
+python3 orca_to_belt.py input.gcode -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300 -layer_comp 0.663
 ```
 
 ### Z-Speed Control
@@ -136,6 +139,33 @@ G1 X202.873 Y472.886 Z1.2 F21000
 G1 Z1.2 F300 ;Adjusted Speed Limit
 G1 X202.873 Y472.8863 F21000
 ```
+
+### Layer Compensation
+
+The `-layer_comp` parameter allows fine-tuning of the transformed layer height using a percentage adjustment. This is useful for compensating flow characteristics specific to belt printing.
+
+**How it works:**
+
+When you slice with a layer height (e.g., 0.6 mm), the script transforms it based on your belt angle:
+```
+Transformed Z = Original Z × (1 / cos(90° - angle))
+```
+
+With `-layer_comp`, you can adjust this further:
+```
+Final Z = Transformed Z × (1 + layer_comp / 100)
+```
+
+**Example with 0.6 mm layer height and 45.28° angle:**
+
+| Without Compensation | With `-layer_comp 0.663` |
+|---------------------|-------------------------|
+| 0.6 × 1.4074 = 0.8444 mm | 0.8444 × 1.00663 = 0.8500 mm |
+
+**Use cases:**
+- **Positive values** (+0.5 to +2%): Increase layer height for better adhesion or faster prints
+- **Negative values** (-0.5 to -2%): Decrease layer height for finer detail or better surface finish
+- **Zero (default)**: No compensation, use calculated transformation only
 
 ---
 
@@ -195,19 +225,21 @@ python3 orca_to_belt.py --help
 Output:
 ```
 usage: orca_to_belt.py [-h] [-x_offset X_OFFSET] [-y_offset Y_OFFSET] 
-                       [-angle ANGLE] [-z_speed Z_SPEED] input_file
+                       [-angle ANGLE] [-z_speed Z_SPEED] [-layer_comp LAYER_COMP] input_file
 
 orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
 
 positional arguments:
-  input_file          Input GCode file path
+  input_file            Input GCode file path
 
 optional arguments:
-  -h, --help          show this help message and exit
-  -x_offset X_OFFSET  X axis offset in mm (default: 0.0)
-  -y_offset Y_OFFSET  Y axis offset in mm (default: 0.0)
-  -angle ANGLE        Belt gantry angle in degrees (default: 45.0)
-  -z_speed Z_SPEED    Z axis feedrate in mm/min (default: 0 = no change)
+  -h, --help            show this help message and exit
+  -x_offset X_OFFSET    X axis offset in mm (default: 0.0)
+  -y_offset Y_OFFSET    Y axis offset in mm (default: 0.0)
+  -angle ANGLE          Belt gantry angle in degrees (default: 45.0)
+  -z_speed Z_SPEED      Z axis feedrate in mm/min (default: 0 = no change)
+  -layer_comp LAYER_COMP
+                        Layer compensation as percentage (default: 0.0)
 ```
 
 ---
@@ -227,6 +259,11 @@ optional arguments:
 - This is normal! Drag the saved GCode back into Orca or use Ideamaker for preview
 - The transformed coordinates are correct for belt printing
 
+### Layer adhesion issues
+- Try adjusting `-layer_comp` by small increments (±0.5% to ±2%)
+- Positive values increase layer height (better adhesion, rougher surface)
+- Negative values decrease layer height (finer detail, may reduce adhesion)
+
 ---
 
 ## Credits
@@ -234,3 +271,6 @@ optional arguments:
 Based on the original work of [zechyc](https://github.com/zechyc/Tilted-Bed-Conveyor)
 
 Python conversion and enhancements by [xboxhacker](https://github.com/xboxhacker)
+
+**Script Version:** v13  
+**Last Updated:** October 2025
