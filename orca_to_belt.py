@@ -2,7 +2,7 @@
 """
 orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
 Converts standard GCode to belt printer format with coordinate transformations
-v9
+v13
 """
 
 import sys
@@ -22,6 +22,7 @@ class OrcaToBelt:
         self.current_offset = 0.0
         self.moveforward = 0.0
         self.z_speed = 0.0
+        self.layer_comp = 0.0
 
     def calculate_transforms(self):
         """Calculate hypoteneuse and adjacent based on angle"""
@@ -46,27 +47,6 @@ class OrcaToBelt:
         except Exception as e:
             print(f"Error detecting slicer: {e}")
         return slicer
-
-    def is_blank_g1(self, line):
-        """Check if a G1 command has no X, Y, Z, or E parameters"""
-        line = line.strip()
-        if not (line.startswith("G1") or line.startswith("G0")):
-            return False
-        
-        # Remove the G1/G0 command and any comments
-        parts = line.split(';')[0].strip().split()
-        if len(parts) <= 1:
-            # Only "G1" or "G0" with nothing else
-            return True
-        
-        # Check if any of the parts are X, Y, Z, or E movements
-        has_movement = False
-        for part in parts[1:]:  # Skip the G1/G0 itself
-            if part.startswith(('X', 'Y', 'Z', 'E')):
-                has_movement = True
-                break
-        
-        return not has_movement
 
     def process_line(self, line_data):
         """Process a single line of GCode"""
@@ -109,7 +89,13 @@ class OrcaToBelt:
                         current_z = float(segment[1:])
                         if self.current_offset == 0.0:
                             self.current_offset = current_z * self.adj
-                        z_value = current_z * self.hyp
+                        
+                        # Apply transformation
+                        z_transformed = current_z * self.hyp
+                        
+                        # Apply layer compensation as percentage
+                        z_value = z_transformed * (1.0 + self.layer_comp / 100.0)
+                        
                         temp[i] = f"Z{z_value:.4f}"  # Limit Z to 4 decimal places
                         z_index = i
                         self.y_offset = current_z * self.adj - self.current_offset
@@ -137,13 +123,14 @@ class OrcaToBelt:
 
         return line_data
 
-    def process_file(self, input_file, x_offset=0.0, y_offset=0.0, angle=45.0, z_speed=0.0):
+    def process_file(self, input_file, x_offset=0.0, y_offset=0.0, angle=45.0, z_speed=0.0, layer_comp=0.0):
         """Process the GCode file - reads from input, writes back to same file"""
         # Set parameters
         self.x_original = x_offset
         self.y_original = y_offset
         self.angle = angle
         self.z_speed = z_speed
+        self.layer_comp = layer_comp
 
         # Calculate transforms
         self.calculate_transforms()
@@ -160,7 +147,6 @@ class OrcaToBelt:
             return False
 
         # Process and write back to the same file
-        blank_lines_removed = 0
         try:
             with open(input_file, 'w', encoding='utf-8') as sw:
                 # Inject custom header lines at the start
@@ -173,16 +159,12 @@ class OrcaToBelt:
                 if self.z_speed > 0:
                     sw.write(f"; Z Speed Override: {self.z_speed:.0f}\n")
                     sw.write("; Z movements execute BEFORE XY for collision safety\n")
+                if self.layer_comp != 0.0:
+                    sw.write(f"; Layer Compensation: {self.layer_comp:+.2f}%\n")
 
                 # Process each line
                 for line in input_lines:
                     processed_line = self.process_line(line.rstrip('\n\r'))
-                    
-                    # Check for blank G1/G0 commands and skip them
-                    if self.is_blank_g1(processed_line):
-                        blank_lines_removed += 1
-                        continue
-                    
                     sw.write(processed_line + '\n')
 
         except Exception as ex:
@@ -192,8 +174,8 @@ class OrcaToBelt:
         print("orca_to_belt Complete")
         if self.z_speed > 0:
             print(f"Z movements limited to F{self.z_speed:.0f} (executed before XY)")
-        if blank_lines_removed > 0:
-            print(f"Removed {blank_lines_removed} blank G1/G0 command(s)")
+        if self.layer_comp != 0.0:
+            print(f"Layer compensation: {self.layer_comp:+.2f}%")
         return True
 
 
@@ -209,7 +191,8 @@ Examples:
   orca_to_belt.py input.gcode
   orca_to_belt.py input.gcode -x_offset 10 -y_offset 5 -angle 45.28
   orca_to_belt.py input.gcode -angle 45.28 -z_speed 300
-  orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300
+  orca_to_belt.py input.gcode -angle 45.28 -z_speed 300 -layer_comp 0.663
+  orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300 -layer_comp 0.663
             """
         )
         
@@ -231,6 +214,10 @@ Examples:
                           type=float, 
                           default=0.0,
                           help='Z axis feedrate in mm/min (default: 0 = no change). If set, Z movements are split and executed BEFORE XY movements for collision safety.')
+        parser.add_argument('-layer_comp', 
+                          type=float, 
+                          default=0.0,
+                          help='Layer compensation as percentage (default: 0.0). Positive values increase layer height, negative values decrease. Example: 0.663 = +0.663%% increase')
 
         args = parser.parse_args()
 
@@ -242,7 +229,7 @@ Examples:
 
         # Process the file
         converter = OrcaToBelt()
-        success = converter.process_file(args.input_file, args.x_offset, args.y_offset, args.angle, args.z_speed)
+        success = converter.process_file(args.input_file, args.x_offset, args.y_offset, args.angle, args.z_speed, args.layer_comp)
         
         if success:
             sys.exit(0)
