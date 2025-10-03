@@ -1,16 +1,23 @@
 # Orca_to_Belt
-OrcaSlicer post script to convert to belt printing.
+OrcaSlicer post-processing script to convert standard GCode to belt printer format.
 Based on the work of [zechyc](https://github.com/zechyc/Tilted-Bed-Conveyor)
 
-**THIS IS A WORK IN PROGRESS**
-This script only works with Orca Slicer and Windows.
+**Cross-Platform Python Script** - Works on Windows, macOS, and Linux!
+
+# Features
+
+✅ **Coordinate transformation** for tilted bed geometry  
+✅ **Named parameters** for easy configuration  
+✅ **Z-speed control** - Independent feedrate for Z movements (executed before XY for safety)  
+✅ **Automatic header injection** for belt printer compatibility  
+✅ **Cross-platform** - Python 3.6+ required  
 
 # Usage
 
-Add a generic printer to Orca to start a profile for your belt printer. Adjust the build plate Y and Z to about 600-1000. **DO NOT make it 99999**. You will have issues zooming in and panning around. You want to make it the size of your object.
+Add a generic printer to Orca to start a profile for your belt printer. Adjust the build plate Y and Z to about 600-1000. **DO NOT make it 99999**. You will have issues zooming in and panning around.
 
 Still working on a purge line, so for now, remove it from the start GCODE section in Orca. This is mine:
-```
+```gcode
 M190 S[bed_temperature_initial_layer_single]
 M109 S[nozzle_temperature_initial_layer]
 PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_initial_layer_single]
@@ -29,25 +36,105 @@ G92 E0 Z0
 ### If you are getting a `Move out of range:` error -
 
 Change this in your `printer.cfg`
-```
+```ini
 [stepper_y]
 position_min: -6.0
 ```
 This will allow for a lower Y movement on the belt. Make sure you do not crash the nozzle! Keep an eye on it.
 
 ---
-Download the `orca_to_belt.exe` file to your computer.
+
+## Installation
+
+### Requirements
+- Python 3.6 or higher
+
+### Download the Script
+
+Download `orca_to_belt.py` from the releases page:
 
 https://github.com/xboxhacker/Tilted-Bed-Conveyor/releases/
 
-This program is not Mac or Linux compatible. Sorry.
+Or clone the repository:
+```bash
+git clone https://github.com/xboxhacker/Tilted-Bed-Conveyor.git
+```
 
+---
 
-In OrcaSlicer>Others, add this to the postprocessing script section:
-`"full\path\to\orca_to_belt.exe" [x_offset] [y_offset] [angle]`
-Change your path to the file. Offsets are optional and not needed.
+## OrcaSlicer Configuration
+
+In **OrcaSlicer → Printer Settings → Post-processing scripts**, add:
+
+### Windows:
+```batch
+"C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe" "C:\Path\To\orca_to_belt.py";
+```
+*or*
+```batch
+"C:\Users\YourUsername\AppData\Local\Programs\Python\Python312\python.exe" "C:\Path\To\orca_to_belt.py" "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45 -z_speed 300;
+```
+
+### macOS/Linux:
+```bash
+python3 /path/to/orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300;
+```
 
 ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/postporcessing.png)
+
+### Parameters:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `input_file` | GCode file path (use `[output_filepath]` in OrcaSlicer) | Required |
+| `-x_offset` | X axis offset in mm | 0.0 |
+| `-y_offset` | Y axis offset in mm | 0.0 |
+| `-angle` | Belt gantry angle in degrees | 45.0 |
+| `-z_speed` | Z axis feedrate in mm/min (0 = no change) | 0.0 |
+
+### Examples:
+
+**Basic (defaults):**
+```bash
+python3 orca_to_belt.py input.gcode
+```
+
+**With custom angle:**
+```bash
+python3 orca_to_belt.py input.gcode -angle 45.28
+```
+
+**With Z speed control (recommended):**
+```bash
+python3 orca_to_belt.py input.gcode -angle 45.28 -z_speed 300
+```
+
+**All parameters:**
+```bash
+python3 orca_to_belt.py input.gcode -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300
+```
+
+### Z-Speed Control
+
+The `-z_speed` parameter allows you to control Z movement speed independently from XY movements. This is useful when OrcaSlicer's rapid moves (F21000) are too fast for your belt printer's Z axis.
+
+When `-z_speed` is set to a positive value:
+- Z movements are separated from XY movements
+- Z moves **BEFORE** XY for collision safety
+- Z uses the specified feedrate instead of the line's F value
+
+**Example transformation with `-z_speed 300`:**
+
+**Before:**
+```gcode
+G1 X202.873 Y472.886 Z1.2 F21000
+```
+
+**After:**
+```gcode
+G1 Z1.2 F300 ;Adjusted Speed Limit
+G1 X202.873 Y472.8863 F21000
+```
 
 ---
 
@@ -82,7 +169,7 @@ Change your path to the file. Offsets are optional and not needed.
 
  ---
 
- # Tesing Volumetric Flow in Orca
+ # Testing Volumetric Flow in Orca
 I have created a STEP file for testing flow. It can be found here: https://www.printables.com/model/1228148
 You need to replace the `SpeedTestStructure.step` in the orca folder. Make sure to make a backup!
 
@@ -94,3 +181,55 @@ The model has 5mm graduated marks to help find your max flow.
 
  
 
+---
+
+## Command-Line Usage
+
+You can also run the script directly from the command line:
+
+```bash
+python3 orca_to_belt.py --help
+```
+
+Output:
+```
+usage: orca_to_belt.py [-h] [-x_offset X_OFFSET] [-y_offset Y_OFFSET] 
+                       [-angle ANGLE] [-z_speed Z_SPEED] input_file
+
+orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
+
+positional arguments:
+  input_file          Input GCode file path
+
+optional arguments:
+  -h, --help          show this help message and exit
+  -x_offset X_OFFSET  X axis offset in mm (default: 0.0)
+  -y_offset Y_OFFSET  Y axis offset in mm (default: 0.0)
+  -angle ANGLE        Belt gantry angle in degrees (default: 45.0)
+  -z_speed Z_SPEED    Z axis feedrate in mm/min (default: 0 = no change)
+```
+
+---
+
+## Troubleshooting
+
+### Script fails with "Error code: 1"
+- Make sure Python 3.6+ is installed: `python --version` or `python3 --version`
+- Check that the file path to `orca_to_belt.py` is correct
+- Try running the script manually first to see detailed error messages
+
+### Z movements still too fast
+- Increase the `-z_speed` value (try 100-500 mm/min)
+- Check your printer's max Z velocity in `printer.cfg`
+
+### Preview looks wrong in OrcaSlicer
+- This is normal! Drag the saved GCode back into Orca or use Ideamaker for preview
+- The transformed coordinates are correct for belt printing
+
+---
+
+## Credits
+
+Based on the original work of [zechyc](https://github.com/zechyc/Tilted-Bed-Conveyor)
+
+Python conversion and enhancements by [xboxhacker](https://github.com/xboxhacker)
