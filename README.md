@@ -21,6 +21,7 @@ Still working on a purge line, so for now, remove it from the start GCODE sectio
 M190 S[bed_temperature_initial_layer_single]
 M109 S[nozzle_temperature_initial_layer]
 PRINT_START EXTRUDER=[nozzle_temperature_initial_layer] BED=[bed_temperature_initial_layer_single]
+BED_MESH_PROFILE LOAD=default ; IMPORTANT!!
 G28           ;Home
 G92 E0        ; Set axis to 0
 G1 E25        ;Blob Purge
