@@ -171,6 +171,8 @@ Final Z = Transformed Z × (1 + layer_comp / 100)
 
  Add your object to the build plate. Rotate the object 45 degrees on the X axis (RED). Make sure your `First Layer Height` and `Layer Height` are the same (or very close), or Orca will throw an error.
 
+ *If you have dialed in your orinter and know the exact printing angle, let's say 45.28, then you need to rotate the STL to this same angle. Then use this same angle in the post-processor*
+
 ### NOTE: The face noted in the image will be printed flat on the belt.
  
  ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/face.png)
