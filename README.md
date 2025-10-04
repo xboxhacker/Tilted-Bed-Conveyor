@@ -144,6 +144,16 @@ G1 X202.873 Y472.8863 F21000
 
 The `-layer_comp` parameter allows fine-tuning of the transformed layer height using a percentage adjustment. This is useful for compensating flow characteristics specific to belt printing.
 
+This will alter the calculated Hypotenuse Altitude with a positive or negative movement. The higher the altitude, the more space (or less squish) between each layer.
+
+![ir3v2](https://github.com/user-attachments/assets/c966b021-7187-4e59-a8b3-66d66b1eeafd)
+
+This is something you will need to ultra-fine-tune for your printer and filaments.
+
+## Use EXTREME CAUTION when testing this option!
+
+
+
 **How it works:**
 
 When you slice with a layer height (e.g., 0.6 mm), the script transforms it based on your belt angle:
