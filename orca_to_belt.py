@@ -2,7 +2,7 @@
 """
 orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
 Converts standard GCode to belt printer format with coordinate transformations
-v13
+v15
 """
 
 import sys
@@ -16,21 +16,21 @@ class OrcaToBelt:
         self.angle = 45.0
         self.hyp = 0.0
         self.adj = 0.0
-        self.x_original = 0.0
-        self.y_original = 0.0
-        self.y_offset = 0.0
+        self.x_original = 0.0         # User X offset (constant)
+        self.y_original = 0.0         # User Y offset (also used as clamp minimum when non-zero)
+        self.y_offset = 0.0           # Dynamic Y offset from Z transform
         self.current_offset = 0.0
-        self.moveforward = 0.0
+        self.moveforward = 0.0        # First encountered Y (for anchoring)
         self.z_speed = 0.0
-        self.layer_comp = 0.0
+        self.layer_comp = 0.0         # Percent
 
     def calculate_transforms(self):
-        """Calculate hypoteneuse and adjacent based on angle"""
+        """Calculate hypotenuse and adjacent based on gantry angle"""
         self.hyp = 1 / math.cos((90 - self.angle) / 180 * math.pi)
         self.adj = math.tan((90 - self.angle) / 180 * math.pi)
 
     def detect_slicer(self, filepath):
-        """Detect which slicer generated the GCode"""
+        """Detect which slicer generated the GCode (best-effort)"""
         slicer = ""
         try:
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
@@ -60,7 +60,7 @@ class OrcaToBelt:
             z_processed = False
             e_processed = False
             f_processed = False
-            
+
             z_value = None
             z_index = -1
 
@@ -79,7 +79,12 @@ class OrcaToBelt:
                         if self.moveforward == 0.0:
                             self.moveforward = y_value
                         calculated_y = y_value + self.y_offset + self.y_original - self.moveforward
-                        temp[i] = f"Y{calculated_y:.4f}"  # Limit Y to 4 decimal places
+
+                        # Clamp Y to minimum y_original if y_original is non-zero
+                        if self.y_original != 0.0 and calculated_y < self.y_original:
+                            calculated_y = self.y_original
+
+                        temp[i] = f"Y{calculated_y:.4f}"  # round Y to 4 decimals
                         y_processed = True
                     except ValueError:
                         pass
@@ -89,35 +94,38 @@ class OrcaToBelt:
                         current_z = float(segment[1:])
                         if self.current_offset == 0.0:
                             self.current_offset = current_z * self.adj
-                        
-                        # Apply transformation
+
+                        # Transform Z along gantry angle
                         z_transformed = current_z * self.hyp
-                        
-                        # Apply layer compensation as percentage
+                        # Apply layer compensation percentage
                         z_value = z_transformed * (1.0 + self.layer_comp / 100.0)
-                        
-                        temp[i] = f"Z{z_value:.4f}"  # Limit Z to 4 decimal places
+
+                        temp[i] = f"Z{z_value:.4f}"  # round Z to 4 decimals
                         z_index = i
+
+                        # Update dynamic Y offset from the Z transform
                         self.y_offset = current_z * self.adj - self.current_offset
                         z_processed = True
                     except ValueError:
                         pass
 
                 elif segment.startswith("E") and not e_processed:
-                    # Preserve E value as is
                     e_processed = True
 
                 elif segment.startswith("F") and not f_processed:
-                    # Preserve F value as is
                     f_processed = True
 
             # If z_speed is set and we found a Z value, split the line
             if self.z_speed > 0 and z_processed and z_value is not None:
                 # Remove Z from the current line
-                temp.pop(z_index)
-                xy_line = ' '.join(temp)
+                if 0 <= z_index < len(temp):
+                    temp.pop(z_index)
+                xy_line = ' '.join(temp).strip()
                 # Put Z movement BEFORE the XY movement for safety
-                line_data = f"G1 Z{z_value:.4f} F{self.z_speed:.0f} ;Adjusted Speed Limit\n{xy_line}"
+                if xy_line:
+                    line_data = f"G1 Z{z_value:.4f} F{self.z_speed:.0f} ;Adjusted Speed Limit\n{xy_line}"
+                else:
+                    line_data = f"G1 Z{z_value:.4f} F{self.z_speed:.0f} ;Adjusted Speed Limit"
             else:
                 line_data = ' '.join(temp)
 
@@ -134,9 +142,6 @@ class OrcaToBelt:
 
         # Calculate transforms
         self.calculate_transforms()
-
-        # Detect slicer
-        slicer = self.detect_slicer(input_file)
 
         # Read all lines from input file first
         try:
@@ -161,6 +166,8 @@ class OrcaToBelt:
                     sw.write("; Z movements execute BEFORE XY for collision safety\n")
                 if self.layer_comp != 0.0:
                     sw.write(f"; Layer Compensation: {self.layer_comp:+.2f}%\n")
+                if self.y_original != 0.0:
+                    sw.write(f"; Y Offset (anchor & minimum clamp): {self.y_original:.4f}\n")
 
                 # Process each line
                 for line in input_lines:
@@ -176,65 +183,67 @@ class OrcaToBelt:
             print(f"Z movements limited to F{self.z_speed:.0f} (executed before XY)")
         if self.layer_comp != 0.0:
             print(f"Layer compensation: {self.layer_comp:+.2f}%")
+        if self.y_original != 0.0:
+            print(f"Y clamped to minimum of {self.y_original:.4f}")
         return True
 
 
 def main():
     """Main entry point"""
     try:
-        # Set up argument parser
         parser = argparse.ArgumentParser(
             description='orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
   orca_to_belt.py input.gcode
-  orca_to_belt.py input.gcode -x_offset 10 -y_offset 5 -angle 45.28
+  orca_to_belt.py input.gcode -x_offset 10 -y_offset 0.35 -angle 45.28
   orca_to_belt.py input.gcode -angle 45.28 -z_speed 300
-  orca_to_belt.py input.gcode -angle 45.28 -z_speed 300 -layer_comp 0.663
-  orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -angle 45.28 -z_speed 300 -layer_comp 0.663
+  orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0.35 -angle 45.28 -z_speed 300 -layer_comp 0.663
             """
         )
-        
-        parser.add_argument('input_file', 
-                          help='Input GCode file path')
-        parser.add_argument('-x_offset', 
-                          type=float, 
-                          default=0.0,
-                          help='X axis offset in mm (default: 0.0)')
-        parser.add_argument('-y_offset', 
-                          type=float, 
-                          default=0.0,
-                          help='Y axis offset in mm (default: 0.0)')
-        parser.add_argument('-angle', 
-                          type=float, 
-                          default=45.0,
-                          help='Belt gantry angle in degrees (default: 45.0)')
-        parser.add_argument('-z_speed', 
-                          type=float, 
-                          default=0.0,
-                          help='Z axis feedrate in mm/min (default: 0 = no change). If set, Z movements are split and executed BEFORE XY movements for collision safety.')
-        parser.add_argument('-layer_comp', 
-                          type=float, 
-                          default=0.0,
-                          help='Layer compensation as percentage (default: 0.0). Positive values increase layer height, negative values decrease. Example: 0.663 = +0.663%% increase')
+
+        parser.add_argument('input_file',
+                            help='Input GCode file path (OrcaSlicer passes a temp file via [output_filepath])')
+        parser.add_argument('-x_offset',
+                            type=float,
+                            default=0.0,
+                            help='X axis offset in mm (default: 0.0)')
+        parser.add_argument('-y_offset',
+                            type=float,
+                            default=0.0,
+                            help='Y axis offset in mm (default: 0.0). Also used as the minimum clamp when non-zero.')
+        parser.add_argument('-angle',
+                            type=float,
+                            default=45.0,
+                            help='Belt gantry angle in degrees (default: 45.0)')
+        parser.add_argument('-z_speed',
+                            type=float,
+                            default=0.0,
+                            help='Z axis feedrate in mm/min (default: 0 = no change). If set, Z movements are split and executed BEFORE XY movements for collision safety.')
+        parser.add_argument('-layer_comp',
+                            type=float,
+                            default=0.0,
+                            help='Layer compensation as percentage (default: 0.0). Positive increases transformed Z, negative decreases.')
 
         args = parser.parse_args()
 
-        # Check if input file exists
         if not os.path.exists(args.input_file):
             print(f"Error: Input file '{args.input_file}' not found")
             print(f"Attempted path: {os.path.abspath(args.input_file)}")
             sys.exit(1)
 
-        # Process the file
         converter = OrcaToBelt()
-        success = converter.process_file(args.input_file, args.x_offset, args.y_offset, args.angle, args.z_speed, args.layer_comp)
-        
-        if success:
-            sys.exit(0)
-        else:
-            sys.exit(1)
+        success = converter.process_file(
+            args.input_file,
+            args.x_offset,
+            args.y_offset,
+            args.angle,
+            args.z_speed,
+            args.layer_comp
+        )
+
+        sys.exit(0 if success else 1)
 
     except Exception as e:
         print(f"Fatal error: {e}")
