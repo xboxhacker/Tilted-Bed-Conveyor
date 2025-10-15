@@ -132,7 +132,9 @@ class OrcaToBelt:
         return line_data
 
     def process_file(self, input_file, x_offset=0.0, y_offset=0.0, angle=45.0, z_speed=0.0, layer_comp=0.0):
-        """Process the GCode file - reads from input, writes back to same file"""
+        """Process the GCode file - reads from input, writes back to same file.
+        Everything before '; filament start gcode' is left unchanged. After that point, lines are processed as usual.
+        """
         # Set parameters
         self.x_original = x_offset
         self.y_original = y_offset
@@ -169,10 +171,17 @@ class OrcaToBelt:
                 if self.y_original != 0.0:
                     sw.write(f"; Y Offset (anchor & minimum clamp): {self.y_original:.4f}\n")
 
-                # Process each line
+                process_mode = False
                 for line in input_lines:
-                    processed_line = self.process_line(line.rstrip('\n\r'))
-                    sw.write(processed_line + '\n')
+                    stripped_line = line.rstrip('\n\r')
+                    if not process_mode:
+                        # Look for the marker line
+                        sw.write(stripped_line + '\n')
+                        if stripped_line.strip().lower() == "; filament start gcode":
+                            process_mode = True
+                    else:
+                        processed_line = self.process_line(stripped_line)
+                        sw.write(processed_line + '\n')
 
         except Exception as ex:
             print(f"Error processing file: {ex}")
