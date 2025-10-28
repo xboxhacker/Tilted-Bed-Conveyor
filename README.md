@@ -26,7 +26,6 @@ BED_MESH_PROFILE LOAD=default ; IMPORTANT!!
 G28           ;Home
 G92 E0        ; Set axis to 0
 G1 E25        ;Blob Purge
-;G1 Z-0.4     ;USE THIS FOR A BELT OFFSET! A negative number will make more space between the nozzle and bed.
 FMS_on
 G92 E0 Z0
 
@@ -80,16 +79,29 @@ python3 /path/to/orca_to_belt.py "[output_filepath]" -x_offset 0 -y_offset 0 -an
 
 ![alt text](https://github.com/xboxhacker/Tilted-Bed-Conveyor/blob/master/images/postporcessing.png)
 
-### Parameters:
+### Available Command-Line Options
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `input_file` | GCode file path (use `[output_filepath]` in OrcaSlicer) | Required |
-| `-x_offset` | X axis offset in mm | 0.0 |
-| `-y_offset` | Y axis offset in mm | 0.0 |
-| `-angle` | Belt gantry angle in degrees | 45.0 |
-| `-z_speed` | Z axis feedrate in mm/min (0 = no change) | 0.0 |
-| `-layer_comp` | Layer height compensation as percentage | 0.0 |
+| Option              | Type    | Default | Description                                                                                                 |
+|---------------------|---------|---------|-------------------------------------------------------------------------------------------------------------|
+| `input_file`        | str     | —       | Input GCode file path (required)                                                                            |
+| `-x_offset`         | float   | 0.0     | X axis offset in mm                                                                                         |
+| `-y_offset`         | float   | 0.0     | Y axis offset in mm (also used as minimum clamp when non-zero)                                              |
+| `-angle`            | float   | 45.0    | Belt gantry angle in degrees                                                                                |
+| `-z_speed`          | float   | 0.0     | Z axis feedrate in mm/min (0 = no change; if set, Z movements are split and executed BEFORE XY movements)   |
+| `-layer_comp`       | float   | 0.0     | Layer compensation as percentage (positive increases transformed Z, negative decreases)                     |
+| `--add-m400`        | flag    | False   | Insert an M400 command after each Z adjusted speed limit line (synchronizes before next G-code)             |
+
+**Examples:**
+```bash
+# Basic usage with defaults
+python3 orca_to_belt.py input.gcode
+
+# Custom angle and Z speed
+python3 orca_to_belt.py input.gcode -angle 45.28 -z_speed 300
+
+# With all options including M400
+python3 orca_to_belt.py input.gcode -x_offset 10.0 -y_offset 20.0 -angle 47.5 -z_speed 400 -layer_comp 1.23 --add-m400
+```
 
 ### Examples:
 
