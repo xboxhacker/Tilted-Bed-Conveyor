@@ -4,7 +4,7 @@ orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
 Converts standard GCode to belt printer format with coordinate transformations.
 """
 
-__version__ = "1.18.0"  # Incremented because logic changed
+__version__ = "1.19.0"  # Incremented - force negative Y values to 0.00
 
 import sys
 import os
@@ -62,6 +62,10 @@ class OrcaToBelt:
 
                         if self.y_original != 0.0 and calculated_y < self.y_original:
                             calculated_y = self.y_original
+                        
+                        # Force negative Y values to 0.00
+                        if calculated_y < 0.0:
+                            calculated_y = 0.0
 
                         temp[i] = f"Y{calculated_y:.4f}"
                         y_processed = True
