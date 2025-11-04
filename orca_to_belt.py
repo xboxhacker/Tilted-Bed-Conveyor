@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 orca_to_belt - GCode converter for tilted bed conveyor belt 3D printers
-Converts standard GCode to belt printer format with coordinate transformations
-v18 - Processes GCode after '; filament start gcode' or '; Filament gcode' marker lines
+Converts standard GCode to belt printer format with coordinate transformations.
 """
+
+__version__ = "1.18.0"  # Incremented because logic changed
 
 import sys
 import os
